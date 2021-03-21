@@ -12,7 +12,7 @@ const SignUp = () => {
   const onChangeNickname = useCallback(()=>{},[])
   const onChangePassword = useCallback(()=>{},[])
   const onChangePasswordCheck = useCallback(()=>{},[])
-  return 
+  return (
       <div id="container">
         <Header>Sleact</Header>
         <Form onSubmit={onSubmit}>
@@ -57,6 +57,7 @@ const SignUp = () => {
           <Link to="/login">로그인 하러가기</Link>
         </LinkContainer>
       </div>
+  );
 }
 
 export default SignUp
