@@ -1,15 +1,14 @@
 import React,{useState,useCallback} from 'react'
 import useInput from '@hooks/useInput';
 import { Header, Form,Label, Input, Button, Error, LinkContainer} from "@pages/SignUp/styles"
-import {Link} from 'react-router-dom'
+import {Link, Redirect} from 'react-router-dom'
 import axios from 'axios'
 import useSWR from 'swr'
 import fetcher from '@utils/fetcher'
 
+
 const LogIn = () => {
-  const {data,error,revalidate}=useSWR("http://localhost:3095/api/users",fetcher,{
-    dedupingInterval:100000
-  })
+  const {data,error,revalidate,mutate}=useSWR("http://localhost:3095/api/users",fetcher)
   const [email,onChangeEmail,setEmail] = useInput("")
   const [password,onChangePassword,setPassword] = useInput("")
   const [logInError,setLogInError]=useState(false)
@@ -22,12 +21,19 @@ const LogIn = () => {
         email,password
       },{withCredentials:true}
     ).then(res=>{
-      console.log(res)
-      revalidate()
+      mutate(res.data,false)
     }).catch(err=>
       setLogInError(err.response?.data?.statusCode===401)
       )
   },[email,password])
+  if(data===undefined){
+    return <div>로딩중</div> 
+  }
+
+  if(data){
+    
+    return <Redirect to="/workspace/channel"/> 
+  }
 
   return (
     <div id="container">
