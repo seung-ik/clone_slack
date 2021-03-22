@@ -1,25 +1,37 @@
 import React ,{useState,useCallback}from 'react'
 import {Link, Redirect} from "react-router-dom"
 import {Header,Form,Label,Input,Button,LinkContainer,Error,Success} from "./styles"
-
+import useInput from '@hooks/useInput'
+import axios from 'axios'
 const SignUp = () => {
-  const [email,setEmail]=useState("")
-  const [nickname,setNickname]=useState("")
+  const [email,onChangeEmail,setEmail]=useInput("")
+  const [nickname,onChangeNickname,setNickname]=useInput("")
   const [password,setPassword]=useState("")
   const [passwordCheck,setPasswordCheck]=useState("")
   const [mismatchError,setMissmatchError]= useState(false)
+  const [signUpError,setSignUpError]=useState("")
+  const [signUpSuccess, setSignUpSuccess]=useState(false)
 
   const onSubmit = useCallback((e)=>{
     e.preventDefault()
     console.log(email,nickname,password,passwordCheck)
     if(!mismatchError){
       console.log("서버로 전송하기")
+      setSignUpError("")
+      setSignUpSuccess(false)
+      axios.post("http://localhost:3095/api/users",{
+        email,nickname,password
+      }).then((response)=>{
+        console.log(response)
+        setSignUpSuccess(true)
+      })
+        .catch((error)=>{
+          console.log(error.response)
+          setSignUpError(error.response.data)
+        })
+        .finally(()=>{})
     }
   },[email,nickname,password,passwordCheck])
-
-  const onChangeEmail = useCallback((e)=>{setEmail(e.target.value)},[])
-
-  const onChangeNickname = useCallback((e)=>{setNickname(e.target.value)},[])
 
   const onChangePassword = useCallback((e)=>{
     setPassword(e.target.value)
@@ -65,9 +77,9 @@ const SignUp = () => {
               />
             </div>
             {mismatchError && <Error>비밀번호가 일치하지 않습니다.</Error>}
-            {/* {!nickname && <Error>닉네임을 입력해주세요.</Error>}
+            {!nickname && <Error>닉네임을 입력해주세요.</Error>}
             {signUpError && <Error>{signUpError}</Error>}
-            {signUpSuccess && <Success>회원가입되었습니다! 로그인해주세요.</Success>} */}
+            {signUpSuccess && <Success>회원가입되었습니다! 로그인해주세요.</Success>}
           </Label>
           <Button type="submit">회원가입</Button>
         </Form>
