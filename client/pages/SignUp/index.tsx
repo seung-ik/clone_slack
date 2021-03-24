@@ -6,7 +6,7 @@ import axios from 'axios'
 import useSWR from 'swr'
 import fetcher from '@utils/fetcher'
 const SignUp = () => {
-  const {data,error,revalidate}=useSWR("http://localhost:3095/api/users",fetcher)
+  const {data,error,revalidate}=useSWR("/api/users",fetcher)
   const [email,onChangeEmail,setEmail]=useInput("")
   const [nickname,onChangeNickname,setNickname]=useInput("")
   const [password,setPassword]=useState("")
@@ -22,7 +22,7 @@ const SignUp = () => {
       console.log("서버로 전송하기")
       setSignUpError("")
       setSignUpSuccess(false)
-      axios.post("http://localhost:3095/api/users",{
+      axios.post("/api/users",{
         email,nickname,password
       }).then((response)=>{
         console.log(response)
@@ -50,7 +50,7 @@ const SignUp = () => {
   }
   
   if(data){
-    return <Redirect to="/workspace/channel"/> 
+    return <Redirect to="/workspace/sleact/channel/일반"/> 
   }
   return (
       <div id="container">
