@@ -1,21 +1,81 @@
-import React,{useCallback,VFC} from 'react'
-import { Mention } from 'react-mentions'
-import {ChatArea, Form, MentionsTextarea,Toolbox,SendButton} from './styles'
+import React,{useCallback,VFC,useRef,useEffect} from 'react'
+import { Mention, SuggestionDataItem } from 'react-mentions'
+import {ChatArea, Form, MentionsTextarea,Toolbox,SendButton, EachMention} from './styles'
+import autosize from 'autosize'
+import useSWR from 'swr'
+import fetcher from '@utils/fetcher'
+import { IUser } from '@typings/db'
+import { useParams } from 'react-router'
+import gravatar from 'gravatar'
+
 
 interface Props{
   chat: string;
+  onSubmitForm : (e:any)=>void;
+  onChangeChat : (e:any)=>void;
+  placeholder? : string
 }
 
-const ChatBox:VFC<Props> = ({chat}) => {
+const ChatBox:VFC<Props> = ({chat, onSubmitForm, onChangeChat,placeholder}) => {
+  
+  const {workspace}= useParams<{workspace:string}>();
+  const { data:userData, error, revalidate, mutate } = useSWR<IUser | false>("/api/users", fetcher)
+  const { data:memberData } = useSWR<IUser[]>(userData?`/api/workspaces/${workspace}/members`:null, fetcher)
+  
+  const textareaRef =useRef<HTMLTextAreaElement>(null);
 
-  const onSubmitForm = useCallback(()=>{},[])
+  useEffect(()=>{
+    if(textareaRef.current){
+      autosize(textareaRef.current)
+    }
+  },[])
+
+  const onKeyDownChat = useCallback((e)=>{
+    if(e.key==="Enter"){
+      if(!e.shiftKey){
+        console.log("keydown")
+        e.preventDefault()
+        onSubmitForm(e)
+      }
+    }
+  },[onSubmitForm])
+
+  const renderSuggestion = useCallback(
+    ( suggestion: SuggestionDataItem,
+      search: string,
+      highlightedDisplay: React.ReactNode,
+      index: number,
+      focus: boolean,
+    ): React.ReactNode => {
+      if (!memberData) return;
+      return (
+        <EachMention focus={focus}>
+          <img
+            src={gravatar.url(memberData[index].email, { s: '20px', d: 'retro' })}
+            alt={memberData[index].nickname}
+          />
+          <span>{highlightedDisplay}</span>
+        </EachMention>
+      );
+    },
+    [memberData],
+  );
 
   return (
     <ChatArea>
       <Form onSubmit={onSubmitForm}>
-        <MentionsTextarea >
-          <textarea></textarea>
-        </MentionsTextarea >
+        <MentionsTextarea id="editor-chat" value={chat} onChange={onChangeChat} onKeyPress={onKeyDownChat} 
+        placeholder={placeholder} 
+        inputRef={textareaRef}
+        allowSuggestionsAboveCursor>
+          <Mention
+            appendSpaceOnAdd
+            trigger="@"
+            data={memberData?.map((v) => ({ id: v.id, display: v.nickname })) || []}
+            renderSuggestion={renderSuggestion}
+          />
+        </MentionsTextarea>
+
         <Toolbox>
         <SendButton
             className={

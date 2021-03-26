@@ -21,7 +21,7 @@ const LogIn = () => {
         email,password
       },{withCredentials:true}
     ).then(res=>{
-      mutate(res.data,false)
+      revalidate()
     }).catch(err=>
       setLogInError(err.response?.data?.statusCode===401)
       )

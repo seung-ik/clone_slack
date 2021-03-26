@@ -1,4 +1,4 @@
-import React, { VFC, useCallback, useState } from 'react'
+import React, { VFC, useCallback, useState, useEffect } from 'react'
 import useSWR, { mutate } from 'swr'
 import fetcher from '@utils/fetcher'
 import axios from 'axios'
@@ -18,6 +18,7 @@ import InviteWorkspaceModal from '@components/InviteWorkspaceModal'
 import InviteChannelModal from '@components/InviteChannelModal'
 import DMlist from '@components/DMlist/index'
 import ChannelList from '@components/ChannelList'
+import useSocket from '@hooks/useSocket'
 
 const Channel = loadable(() => import('@pages/Channel'));
 const DirectMessage = loadable(() => import('@pages/DirectMessage'));
@@ -27,8 +28,22 @@ const Workspace: VFC = () => {
 
   const {workspace}= useParams<{workspace:string}>();
   const { data:userData, error, revalidate, mutate } = useSWR<IUser | false>("/api/users", fetcher)
-
   const { data:channelData } = useSWR<IChannel[]>(userData?`/api/workspaces/${workspace}/channels`:null, fetcher)
+  const { data:memberData } = useSWR<IUser[]>(userData?`/api/workspaces/${workspace}/members`:null, fetcher)
+  const [socket,disconnect]= useSocket(workspace)
+
+  useEffect(()=>{
+    console.log(socket)
+    if(channelData && userData && socket ){
+      socket.emit('login',{id:userData.id, channels:channelData.map((v)=>v.id)})
+    }
+  },[socket,userData,channelData])
+
+  useEffect(()=>{
+    return ()=>{
+      disconnect();
+    }
+  },[workspace,disconnect])
 
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showCreateWorkspaceModal, setShowCreateWorkspaceModal] = useState(false)
@@ -41,8 +56,9 @@ const Workspace: VFC = () => {
   const [showWorkspaceModal,setShowWorkspaceModal] = useState(false)
   const [showCreateChannelModal,setShowCreateChannelModal] = useState(false)
 
+ 
+
   const onCloseModal = useCallback(()=>{
-    console.log("ok")
     setShowCreateWorkspaceModal(false)
     setShowCreateChannelModal(false)
     setShowInviteChannelModal(false)
@@ -150,8 +166,8 @@ const Workspace: VFC = () => {
         </Channels>
         <Chats>
           <Switch>
-            <Route path="/workspace/:workspace/dm/:id" component={DirectMessage} />
             <Route path="/workspace/:workspace/channel/:channel" component={Channel} />
+            <Route path="/workspace/:workspace/dm/:id" component={DirectMessage} />
           </Switch>
         </Chats>
       </WorkspaceWrapper>
