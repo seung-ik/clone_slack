@@ -1,5 +1,5 @@
-import { IDM } from '@typings/db'
-import React, { useMemo, VFC } from 'react'
+import { IChat, IDM, IUser } from '@typings/db'
+import React, { useMemo, VFC ,memo} from 'react'
 import { ChatWrapper } from './styles'
 import gravatar from 'gravatar'
 import dayjs from 'dayjs'
@@ -8,12 +8,14 @@ import { useParams } from 'react-router'
 import { Link } from 'react-router-dom'
 
 interface Props{
-  data:IDM;
+  data:IDM | IChat;
 }
 const BACK_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3095' : 'https://sleact.nodebird.com';
+
+
 const Chat :VFC<Props>= ({data}) => {
   const { workspace } = useParams<{ workspace: string; channel: string }>();
-  const user = data.Sender
+  const user:IUser = 'Sender' in data? data.Sender : data.User
   const result = useMemo(
     () =>
       data.content.startsWith('uploads\\') ? (
@@ -53,4 +55,4 @@ const Chat :VFC<Props>= ({data}) => {
   )
 }
 
-export default Chat
+export default memo(Chat)
